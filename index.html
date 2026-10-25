@@ -4,9 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="Pokédex complet, animé et hors ligne : toutes les espèces, formes, évolutions, cris et modèles 3D." />
-    <meta name="theme-color" content="#0b0d17" />
+    <meta name="theme-color" content="#0a0c16" />
     <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin />
     <title>Pokédex</title>
+    <script>
+      // Applique thème et langue avant le premier rendu (évite le flash de thème).
+      (function () {
+        try {
+          var t = localStorage.getItem('pokedex:theme') || 'dark';
+          if (t === 'system') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          document.documentElement.className = t;
+          var l = localStorage.getItem('pokedex:lang');
+          if (l) document.documentElement.lang = l === 'zh-hans' ? 'zh-Hans' : l;
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

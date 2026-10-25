@@ -84,19 +84,19 @@ export function offensiveCoverage(attackers: readonly TypeName[]): TypeName[] {
   return TYPE_NAMES.filter((d) => attackers.some((a) => effectiveness(a, d) > 1));
 }
 
-/** Couleurs de référence des types (fond de badge) et texte lisible (contraste AA). */
+/** Couleurs des types : fond de badge et texte avec contraste ≥ 4,5:1 (WCAG AA), halo décoratif. */
 export const TYPE_COLORS: Record<TypeName, { bg: string; fg: string; glow: string }> = {
   normal: { bg: '#9fa19f', fg: '#111', glow: '#c6c6a7' },
-  fire: { bg: '#e62829', fg: '#fff', glow: '#ff7b3d' },
-  water: { bg: '#2980ef', fg: '#fff', glow: '#5fb0ff' },
+  fire: { bg: '#dd2222', fg: '#fff', glow: '#ff7b3d' },
+  water: { bg: '#1f6fd6', fg: '#fff', glow: '#5fb0ff' },
   electric: { bg: '#fac000', fg: '#111', glow: '#ffe45c' },
-  grass: { bg: '#3fa129', fg: '#fff', glow: '#7ee05e' },
+  grass: { bg: '#327f22', fg: '#fff', glow: '#7ee05e' },
   ice: { bg: '#3dcef3', fg: '#111', glow: '#a5f1ff' },
   fighting: { bg: '#c03028', fg: '#fff', glow: '#ff8a4d' },
   poison: { bg: '#9141cb', fg: '#fff', glow: '#cf7bff' },
   ground: { bg: '#915121', fg: '#fff', glow: '#e0b46a' },
   flying: { bg: '#81b9ef', fg: '#111', glow: '#c4e0ff' },
-  psychic: { bg: '#ef4179', fg: '#fff', glow: '#ff86ad' },
+  psychic: { bg: '#d92f68', fg: '#fff', glow: '#ff86ad' },
   bug: { bg: '#91a119', fg: '#111', glow: '#c9e04a' },
   rock: { bg: '#afa981', fg: '#111', glow: '#d9cf98' },
   ghost: { bg: '#704170', fg: '#fff', glow: '#a77bd8' },
