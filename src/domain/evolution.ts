@@ -1,6 +1,6 @@
 /**
  * Conversion des chaînes d'évolution PokeAPI en arbre de nœuds avec conditions structurées.
- * La mise en texte localisée est faite par `src/i18n/evolutionText.ts`.
+ * La mise en texte localisée est faite par `src/components/detail/EvolutionTree.tsx` (ConditionLabel).
  */
 import type { ChainLink, EvolutionChain, EvolutionDetail } from '../api/types';
 import { idFromUrl } from '../api/pokeapi';
@@ -37,15 +37,34 @@ export function conditionsFromDetail(d: EvolutionDetail): EvolutionCondition[] {
   return c;
 }
 
-/** Supprime les méthodes strictement identiques (PokeAPI duplique parfois par jeu). */
-function dedupeMethods(methods: EvolutionMethod[]): EvolutionMethod[] {
-  const seen = new Set<string>();
-  return methods.filter((m) => {
-    const key = JSON.stringify(m);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+/**
+ * Supprime les méthodes identiques (PokeAPI duplique parfois par jeu) et fusionne celles qui
+ * ne diffèrent que par le lieu : « Niveau près d'une Pierre Mousse » existe dans 6 lieux
+ * selon le jeu, on l'affiche en une seule méthode avec la liste des lieux.
+ */
+export function dedupeMethods(methods: EvolutionMethod[]): EvolutionMethod[] {
+  const out: EvolutionMethod[] = [];
+  const byKey = new Map<string, EvolutionMethod>();
+  for (const m of methods) {
+    const locations = m.conditions.flatMap((c) => (c.kind === 'location' ? [c.location] : []));
+    const rest = m.conditions.filter((c) => c.kind !== 'location');
+    const key = JSON.stringify({ trigger: m.trigger, rest, hasLocation: locations.length > 0 });
+    const existing = byKey.get(key);
+    if (!existing) {
+      const copy: EvolutionMethod = { trigger: m.trigger, conditions: [...rest] };
+      if (locations.length) copy.conditions.push({ kind: 'locations', locations: [...locations] });
+      byKey.set(key, copy);
+      out.push(copy);
+    } else if (locations.length) {
+      const loc = existing.conditions.find((c) => c.kind === 'locations');
+      if (loc && loc.kind === 'locations') for (const l of locations) if (!loc.locations.includes(l)) loc.locations.push(l);
+    }
+  }
+  // Un seul lieu : on revient à la condition simple.
+  for (const m of out) {
+    m.conditions = m.conditions.map((c) => (c.kind === 'locations' && c.locations.length === 1 ? { kind: 'location', location: c.locations[0]! } : c));
+  }
+  return out;
 }
 
 function linkToNode(link: ChainLink): EvolutionNode {

@@ -71,6 +71,7 @@ export function setFetchImplementation(fn: FetchLike): void {
 export function resetClientState(): void {
   mirrorUntil = 0;
   inflight.clear();
+  mirrorIndexes.clear();
 }
 
 /**
@@ -136,12 +137,38 @@ async function fetchOnce<T>(url: string, path: string, opts: FetchOptions): Prom
 }
 
 /** Essaie la source préférée puis l'autre ; une 404 sur les deux est définitive. */
+/** Correspondances slug → identifiant par type de ressource, pour le miroir (indexé par numéro uniquement). */
+const mirrorIndexes = new Map<string, Promise<Map<string, number>>>();
+
+/**
+ * Le miroir statique n'expose les ressources que par identifiant numérique (`version/1`),
+ * alors que l'API accepte aussi les slugs (`version/red`). On résout le slug via la liste
+ * complète du type, téléchargée une fois puis gardée en mémoire.
+ */
+async function mirrorPath(path: string, opts: FetchOptions): Promise<string> {
+  const m = /^([a-z-]+)\/([a-z0-9-]*[a-z-][a-z0-9-]*)(\/.*)?$/.exec(path);
+  if (!m?.[1] || !m[2]) return path;
+  const [, kind, slug, rest = ''] = m;
+  let index = mirrorIndexes.get(kind);
+  if (!index) {
+    index = fetchOnce<NamedAPIResourceList>(urlFor('mirror', kind), kind, opts).then(
+      (list) => new Map(list.results.map((r) => [r.name, idFromUrl(r.url)])),
+    );
+    index.catch(() => mirrorIndexes.delete(kind));
+    mirrorIndexes.set(kind, index);
+  }
+  const id = (await index).get(slug);
+  if (id === undefined) throw new ApiError('not-found', path, 404);
+  return `${kind}/${id}${rest}`;
+}
+
 async function fetchFromSources<T>(path: string, opts: FetchOptions): Promise<T> {
   const order: Array<'api' | 'mirror'> = Date.now() < mirrorUntil ? ['mirror', 'api'] : ['api', 'mirror'];
   let lastError: ApiError | undefined;
   for (const source of order) {
     try {
-      const data = await fetchOnce<T>(urlFor(source, path), path, opts);
+      const target = source === 'mirror' ? await mirrorPath(path, opts) : path;
+      const data = await fetchOnce<T>(urlFor(source, target), path, opts);
       if (source === 'mirror' && order[0] === 'api') mirrorUntil = Date.now() + MIRROR_STICKY_MS;
       if (source === 'api') mirrorUntil = 0;
       return data;
@@ -205,5 +232,6 @@ export type LocalizedKind =
   | 'location-area'
   | 'move'
   | 'pokemon-habitat'
+  | 'pokemon-species'
   | 'encounter-method'
   | 'evolution-trigger';

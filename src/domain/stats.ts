@@ -98,3 +98,12 @@ export function potential(stats: BaseStats, allTotals: readonly number[]): Poten
   else if (spd >= 100) role = 'special-wall';
   return { total, percentile: p, tier, role };
 }
+
+/**
+ * Probabilité approximative de capture (formule des générations 6 et suivantes) avec une
+ * Poké Ball, sans statut, PV au maximum : a = taux / 3, p = (a / 255)^(3/4).
+ */
+export function catchProbability(captureRate: number, ballBonus = 1): number {
+  const a = Math.min(255, (captureRate * ballBonus) / 3);
+  return Math.min(1, (a / 255) ** 0.75);
+}

@@ -64,3 +64,25 @@ describe('fetchJson', () => {
     spy.mockRestore();
   });
 });
+
+describe('miroir indexé par numéro', () => {
+  beforeEach(() => resetClientState());
+
+  it('résout un slug en identifiant via la liste du type', async () => {
+    const calls: string[] = [];
+    setFetchImplementation(async (url) => {
+      calls.push(url);
+      if (url.startsWith(API_BASE)) throw new TypeError('Failed to fetch');
+      if (url === `${MIRROR_BASE}/version/index.json`) return json({ count: 1, next: null, previous: null, results: [{ name: 'red', url: '/api/v2/version/1/' }] });
+      if (url === `${MIRROR_BASE}/version/1/index.json`) return json({ id: 1, name: 'red' });
+      return json({}, 404);
+    });
+    await expect(fetchJson('version/red', { retries: 0 })).resolves.toEqual({ id: 1, name: 'red' });
+    expect(calls.at(-1)).toBe(`${MIRROR_BASE}/version/1/index.json`);
+  });
+
+  it('laisse intacts les chemins numériques et les sous-ressources', async () => {
+    setFetchImplementation(async (url) => (url.startsWith(API_BASE) ? Promise.reject(new TypeError('x')) : json({ url })));
+    await expect(fetchJson('pokemon/25/encounters', { retries: 0 })).resolves.toEqual({ url: `${MIRROR_BASE}/pokemon/25/encounters/index.json` });
+  });
+});

@@ -9,7 +9,8 @@
  */
 import { db, type CacheRecord } from './dexie';
 
-export const SCHEMA_VERSION = 1;
+/** À incrémenter quand le format des données normalisées change : l’ancien cache est alors ignoré. */
+export const SCHEMA_VERSION = 2;
 const DAY = 24 * 60 * 60 * 1000;
 /** Les données PokeAPI changent rarement : 30 jours avant revalidation. */
 export const DEFAULT_MAX_AGE = 30 * DAY;

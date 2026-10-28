@@ -71,3 +71,25 @@ describe('arbre', () => {
     expect(evolutionStages(tree).map((s) => s.length)).toEqual([1, 4]);
   });
 });
+
+describe('fusion des lieux', () => {
+  it('regroupe les méthodes qui ne diffèrent que par le lieu', async () => {
+    const { dedupeMethods } = await import('./evolution');
+    const out = dedupeMethods([
+      { trigger: 'level-up', conditions: [{ kind: 'location', location: 'eterna-forest' }] },
+      { trigger: 'level-up', conditions: [{ kind: 'location', location: 'pinwheel-forest' }] },
+      { trigger: 'use-item', conditions: [{ kind: 'item', item: 'leaf-stone' }] },
+      { trigger: 'level-up', conditions: [{ kind: 'location', location: 'eterna-forest' }] },
+    ]);
+    expect(out).toEqual([
+      { trigger: 'level-up', conditions: [{ kind: 'locations', locations: ['eterna-forest', 'pinwheel-forest'] }] },
+      { trigger: 'use-item', conditions: [{ kind: 'item', item: 'leaf-stone' }] },
+    ]);
+  });
+  it('un seul lieu reste une condition simple', async () => {
+    const { dedupeMethods } = await import('./evolution');
+    expect(dedupeMethods([{ trigger: 'level-up', conditions: [{ kind: 'location', location: 'mt-coronet' }] }])[0]?.conditions).toEqual([
+      { kind: 'location', location: 'mt-coronet' },
+    ]);
+  });
+});

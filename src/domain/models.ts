@@ -139,6 +139,8 @@ export type EvolutionCondition =
   | { kind: 'known-move'; move: string }
   | { kind: 'known-move-type'; type: string }
   | { kind: 'location'; location: string }
+  /** Plusieurs lieux possibles selon le jeu (fusion de méthodes qui ne diffèrent que par le lieu). */
+  | { kind: 'locations'; locations: string[] }
   | { kind: 'party-species'; species: string }
   | { kind: 'party-type'; type: string }
   | { kind: 'trade-species'; species: string }
